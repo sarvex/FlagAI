@@ -170,21 +170,14 @@ def main():
                                           cache_dir=cache_dir)
     pool = multiprocessing.Pool(args.workers, initializer=encoder.initializer)
     encoded_docs = pool.imap(encoder.encode, fin, args.chunk_size)
-    #encoded_docs = map(encoder.encode, fin)
-
-    level = "document"
-    if args.split_sentences:
-        level = "sentence"
-
+    level = "sentence" if args.split_sentences else "document"
     print(f"Output prefix: {args.output_prefix}")
     output_bin_files = {}
     output_idx_files = {}
     builders = {}
     for key in args.json_keys:
-        output_bin_files[key] = "{}_{}_{}.bin".format(args.output_prefix,
-                                                      key, level)
-        output_idx_files[key] = "{}_{}_{}.idx".format(args.output_prefix,
-                                                      key, level)
+        output_bin_files[key] = f"{args.output_prefix}_{key}_{level}.bin"
+        output_idx_files[key] = f"{args.output_prefix}_{key}_{level}.idx"
         builders[key] = indexed_dataset.make_builder(output_bin_files[key],
                                                impl=args.dataset_impl,
                                                vocab_size=len(tokenizer.get_vocab()))

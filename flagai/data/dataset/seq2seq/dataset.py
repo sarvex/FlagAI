@@ -108,17 +108,13 @@ class SummmaryProcessor:
         else:
             detokenizer = None
         source_texts, target_texts = [], []
-        with open(os.path.join(self.data_dir + "/" + self.task_name,
-                               f"{filename}.source"),
-                  encoding='utf-8') as file:
+        with open(os.path.join(f"{self.data_dir}/{self.task_name}", f"{filename}.source"), encoding='utf-8') as file:
             for line in file:
                 line = line.strip()
                 line = punctuation_standardization(line)
                 line = detokenizer(line) if detokenizer else line
                 source_texts.append(line)
-        with open(os.path.join(self.data_dir + "/" + self.task_name,
-                               f"{filename}.target"),
-                  encoding='utf-8') as file:
+        with open(os.path.join(f"{self.data_dir}/{self.task_name}", f"{filename}.target"), encoding='utf-8') as file:
             for line in file:
                 line = line.strip()
                 line = punctuation_standardization(line)
@@ -131,7 +127,7 @@ class SummmaryProcessor:
                   target_text) in enumerate(zip(source_texts, target_texts)):
             if (idx + 1) % 20000 == 0:
                 print_rank_0(f"Complete {idx + 1} examples")
-            guid = "%s-%s" % (split, idx)
+            guid = f"{split}-{idx}"
             meta = {
                 "ref":
                 self.tokenizer.DecodeIds(
@@ -146,7 +142,7 @@ class SummmaryProcessor:
                     (source_text.encode('utf-8'), target_text.encode('utf-8'),
                      meta["ref"].encode('utf-8')))
             example_list.append(example)
-        
+
         return example_list
 
 
@@ -169,11 +165,11 @@ class WSCProcessor:
         example_list = []
         idx = 0
         with open(os.path.join(self.data_dir, filename),
-                  encoding='utf-8') as file:
-            for line in file.readlines():
+                      encoding='utf-8') as file:
+            for line in file:
                 content = json.loads(line)
                 context = content['text']
-                guid = "%s-%s" % (split, idx)
+                guid = f"{split}-{idx}"
                 target = content['target']
                 meta = {
                     "answer":
@@ -211,7 +207,7 @@ class CMRCProcessor:
         example_list = []
         idx = 0
         with open(os.path.join(self.data_dir, filename),
-                  encoding='utf-8') as file:
+                      encoding='utf-8') as file:
             dataset = json.load(file)
             for article in dataset['data']:
                 for paragraph in article['paragraphs']:
@@ -222,7 +218,7 @@ class CMRCProcessor:
                                    for answer in qa["answers"]
                                    } if split != 'test' else {"FAKE_ANSWER"}
                         for answer in answers:
-                            guid = "%s-%s" % (split, idx)
+                            guid = f"{split}-{idx}"
                             meta = {
                                 "answer":
                                 answer,
@@ -264,7 +260,7 @@ class SQuADProcessor:
         example_list = []
         idx = 0
         with open(os.path.join(self.data_dir, filename),
-                  encoding='utf-8') as file:
+                      encoding='utf-8') as file:
             dataset = json.load(file)
             for paragraphs in dataset:
                 for paragraph in paragraphs['paragraphs']:
@@ -277,7 +273,7 @@ class SQuADProcessor:
                             for answer in qa["answers"]
                         }
                         for answer in answers:
-                            guid = "%s-%s" % (split, idx)
+                            guid = f"{split}-{idx}"
                             meta = {
                                 "answer_start":
                                 answer_starts[answer],
@@ -333,19 +329,19 @@ class XSumProcessor:
                     line = line.strip()
                     if line.startswith("[SN]"):
                         if key is not None:
-                            if key == "RESTBODY":
-                                source_text = " ".join(sentences)
-                            elif key == "FIRST-SENTENCE":
+                            if key == "FIRST-SENTENCE":
                                 target_text = " ".join(sentences)
+                            elif key == "RESTBODY":
+                                source_text = " ".join(sentences)
                         key = line[4:-4]
                         sentences = []
                     elif line:
                         sentences.append(line)
                 if key is not None:
-                    if key == "RESTBODY":
-                        source_text = " ".join(sentences)
-                    elif key == "FIRST-SENTENCE":
+                    if key == "FIRST-SENTENCE":
                         target_text = " ".join(sentences)
+                    elif key == "RESTBODY":
+                        source_text = " ".join(sentences)
                 source_texts.append(source_text)
                 target_texts.append(target_text)
                 if (i + 1) % 1000 == 0:
@@ -356,7 +352,7 @@ class XSumProcessor:
                   target_text) in enumerate(zip(source_texts, target_texts)):
             if (idx + 1) % 20000 == 0:
                 print_rank_0(f"Complete {idx + 1} examples")
-            guid = "%s-%s" % (split, idx)
+            guid = f"{split}-{idx}"
             meta = {
                 "ref":
                 self.tokenizer.DecodeIds(
@@ -389,12 +385,12 @@ class Seq2SeqDataset(torch.utils.data.Dataset):
                  src_seq_length=608,
                  tgt_seq_length=160):
         self.task_name = task_name
-        self.data_dir = data_dir 
+        self.data_dir = data_dir
         self.max_src_length, self.max_tgt_length = src_seq_length, tgt_seq_length
         self.dataset_type = dataset_type
         self.tokenizer = tokenizer
         self.dataset_name = dataset_type
-        if not os.path.exists(data_dir + '/' + task_name):
+        if not os.path.exists(f'{data_dir}/{task_name}'):
             SuperGlueProcessor()._download_data(data_dir, task_name)
 
         if self.task_name in [
@@ -423,8 +419,7 @@ class Seq2SeqDataset(torch.utils.data.Dataset):
         return len(self.example_list)
 
     def __getitem__(self, idx):
-        example = self.example_list[idx]
-        return example
+        return self.example_list[idx]
 
 class ExtractionDataset(torch.utils.data.Dataset):
 
@@ -461,7 +456,7 @@ class ExtractionDataset(torch.utils.data.Dataset):
                   target_text) in enumerate(zip(source_texts, target_texts)):
             if (idx + 1) % 20000 == 0:
                 print_rank_0(f"Complete {idx + 1} examples")
-            guid = "%s-%s" % (split, idx)
+            guid = f"{split}-{idx}"
             meta = {"ref": target_text}
             example = InputExample(guid=guid,
                                    text_a=source_text,
@@ -506,7 +501,7 @@ class ExtractionDataset(torch.utils.data.Dataset):
             loss_mask = [0] * len(source_tokens)
             for i, mask_pos in enumerate(mask_positions):
                 tgt_text = masked_tgt[i]
-                tgt_tokens = self.tokenizer.EncodeAsIds(" " + tgt_text)
+                tgt_tokens = self.tokenizer.EncodeAsIds(f" {tgt_text}")
                 tokens += [sop_id] + tgt_tokens
                 target_ids += tgt_tokens + [eop_id]
                 loss_mask += [1] * (len(tgt_tokens) + 1)
@@ -538,7 +533,7 @@ class ExtractionDataset(torch.utils.data.Dataset):
         else:
             tokens = source_tokens + [sop_id]
             mask_pos = source_tokens.index(mask_id)
-            position_ids = position_ids + [mask_pos]
+            position_ids += [mask_pos]
             block_position_ids = block_position_ids + [1]
             position_ids = [position_ids, block_position_ids]
             sample = {
@@ -595,7 +590,7 @@ class BlankLMDataset(torch.utils.data.Dataset):
             #     break
             if (idx + 1) % 20000 == 0:
                 print_rank_0(f"Complete {idx + 1} examples")
-            guid = "%s-%s" % (split, idx)
+            guid = f"{split}-{idx}"
             meta = {"ref": target_text}
             example = InputExample(guid=guid,
                                    text_a=source_text,
@@ -628,7 +623,7 @@ class BlankLMDataset(torch.utils.data.Dataset):
                 text = text + [pad_id] * (max_len - len(text))
             return text
 
-        source_tokens = self.tokenizer.EncodeAsIds(" " + source_text)
+        source_tokens = self.tokenizer.EncodeAsIds(f" {source_text}")
         source_tokens = pad_to(source_tokens, self.max_src_length, pad_id)
         sep = len(source_tokens)
         position_ids = list(range(len(source_tokens)))
@@ -643,7 +638,7 @@ class BlankLMDataset(torch.utils.data.Dataset):
             loss_mask = [0] * len(source_tokens)
             for i, mask_pos in enumerate(mask_positions):
                 tgt_text = masked_tgt[i]
-                tgt_tokens = self.tokenizer.EncodeAsIds(" " + tgt_text)
+                tgt_tokens = self.tokenizer.EncodeAsIds(f" {tgt_text}")
                 tokens += [sop_id] + tgt_tokens
                 target_ids += tgt_tokens + [eop_id]
                 loss_mask += [1] * (len(tgt_tokens) + 1)
@@ -670,7 +665,7 @@ class BlankLMDataset(torch.utils.data.Dataset):
         else:
             tokens = source_tokens + [sop_id]
             mask_pos = source_tokens.index(mask_id)
-            position_ids = position_ids + [mask_pos]
+            position_ids += [mask_pos]
             block_position_ids = block_position_ids + [1]
             position_ids = [position_ids, block_position_ids]
             sample = {
@@ -690,10 +685,10 @@ class BlankLMDataset(torch.utils.data.Dataset):
         for i, idx in enumerate(indices):
             if i == 0 or idx != indices[i - 1] + 1:
                 masked_tgt.append("")
-            masked_tgt[-1] += " " + tokens[idx]
+            masked_tgt[-1] += f" {tokens[idx]}"
             tokens[idx] = "[MASK]"
         for i, token in enumerate(tokens):
             if i != 0 and token == "[MASK]" and tokens[i - 1] == "[MASK]":
                 continue
-            masked_src += " " + token
+            masked_src += f" {token}"
         return masked_src, masked_tgt

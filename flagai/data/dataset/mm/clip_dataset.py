@@ -9,15 +9,18 @@ def _convert_image_to_rgb(image):
     return image.convert("RGB")
 
 def clip_transform(img_size):
-    transform = Compose([
-    Resize(img_size, interpolation=Image.BICUBIC),
-    CenterCrop(img_size),
-    _convert_image_to_rgb,
-    ToTensor(),
-    Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-    ])
-  
-    return transform
+    return Compose(
+        [
+            Resize(img_size, interpolation=Image.BICUBIC),
+            CenterCrop(img_size),
+            _convert_image_to_rgb,
+            ToTensor(),
+            Normalize(
+                (0.48145466, 0.4578275, 0.40821073),
+                (0.26862954, 0.26130258, 0.27577711),
+            ),
+        ]
+    )
 
 class CsvDataset(Dataset):
     def __init__(self, 
