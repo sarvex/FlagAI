@@ -31,7 +31,7 @@ setup(
         'ftfy == 6.1.1',
         'Pillow >= 9.3.0',
         'einops == 0.3.0',
-        'diffusers == 0.7.2',
+        'diffusers == 0.20.2',
         'pytorch-lightning == 1.6.5',
         'taming-transformers-rom1504 == 0.0.6',
         'rouge-score == 0.1.2',
