@@ -25,7 +25,7 @@ setup(
         'scikit-learn==1.0.2',
         'tensorboard==2.9.0',
         'transformers==4.20.1',
-        'datasets==2.0.0',
+        'datasets==2.17.0',
         'setuptools==66.0.0',
         'protobuf==3.19.6',
         'ftfy == 6.1.1',
